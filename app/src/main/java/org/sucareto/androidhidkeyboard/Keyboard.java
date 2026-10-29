@@ -100,6 +100,13 @@ public class Keyboard extends HidActivity {
         }
     }
 
+    @Override
+    protected void onHidGeometryChanged() {
+        super.onHidGeometryChanged();
+        FnEnable = false;
+        updateFnLabels();
+    }
+
     private void updateFnLabels() {
             ((Button) findViewById(R.id.Btn12)).setText(getResources().getString(FnEnable ? R.string.KeyText78 : R.string.KeyText12));//Insert
             findViewById(R.id.Btn12).setTag(getResources().getString(FnEnable ? R.string.KeyCode78 : R.string.KeyCode12));

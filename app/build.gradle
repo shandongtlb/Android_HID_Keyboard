@@ -3,13 +3,15 @@ plugins {
 }
 
 android {
-    compileSdk 34
+    compileSdk {
+        version = release(37) { minorApiLevel = 0 }
+    }
     defaultConfig {
         applicationId "org.shandongtlb.hidkeyboard"
         minSdk 26
-        targetSdk 34
-        versionCode 12
-        versionName '1.6.0'
+        targetSdk 37
+        versionCode 13
+        versionName '1.7.0'
     }
 
     signingConfigs {
@@ -28,6 +30,7 @@ android {
             versionNameSuffix "-debug"
         }
         release {
+            minifyEnabled false
             if (System.getenv('HID_KEYSTORE')) signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
@@ -40,15 +43,34 @@ android {
         viewBinding true
         aidl true
     }
+    testOptions {
+        unitTests.includeAndroidResources = true
+        unitTests.all {
+            maxHeapSize = '2g'
+            // Robolectric's Android 17 runtime needs OpenJDK internals on JDK 21.
+            // These flags affect the test JVM only, not the APK.
+            jvmArgs += [
+                    '--add-opens=java.base/java.lang=ALL-UNNAMED',
+                    '--add-opens=java.base/java.util=ALL-UNNAMED',
+                    '--add-opens=java.base/java.io=ALL-UNNAMED',
+                    '--add-opens=java.base/java.net=ALL-UNNAMED',
+                    '--add-opens=java.base/java.security=ALL-UNNAMED',
+                    '--add-opens=java.base/java.text=ALL-UNNAMED',
+                    '--add-opens=java.base/jdk.internal.access=ALL-UNNAMED',
+                    '--add-opens=java.desktop/java.awt.font=ALL-UNNAMED',
+                    '--add-opens=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED'
+            ]
+            systemProperty 'robolectric.dependency.repo.url', 'https://repo.maven.apache.org/maven2'
+        }
+    }
     namespace 'org.sucareto.androidhidkeyboard'
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.11.0'
-}
-
-dependencies {
+    implementation 'androidx.appcompat:appcompat:1.8.0'
+    implementation 'androidx.activity:activity:1.13.0'
+    implementation 'com.google.android.material:material:1.13.0'
     implementation 'com.github.topjohnwu.libsu:service:6.0.0'
     testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.robolectric:robolectric:4.17'
 }

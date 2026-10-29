@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">HID Keyboard Plus</string>
+    <string name="app_name">HID Keyboard</string>
     <string name="KeyText1" translatable="false">Esc</string>
     <string name="KeyCode1" translatable="false">29</string> <!-- Keyboard ESCAPE -->
     <string name="KeyText2" translatable="false">F1</string>

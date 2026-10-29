@@ -1,0 +1,7 @@
+<resources>
+    <item name="hid_vertical_scroll" type="id" />
+    <item name="hid_horizontal_scroll" type="id" />
+    <item name="hid_status" type="id" />
+    <item name="hid_retry" type="id" />
+    <item name="hid_release" type="id" />
+</resources>

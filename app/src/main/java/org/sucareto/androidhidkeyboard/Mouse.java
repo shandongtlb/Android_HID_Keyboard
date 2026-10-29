@@ -62,6 +62,7 @@ public class Mouse extends HidActivity {
                     }
                 });
         findViewById(R.id.touch_area).setOnTouchListener((view, event) -> {
+            keepPadGesture(view, event);
             touchDetector.onTouchEvent(event);
             if (event.getActionMasked() == MotionEvent.ACTION_UP) view.performClick();
             return true;
@@ -87,6 +88,7 @@ public class Mouse extends HidActivity {
                     }
                 });
         findViewById(R.id.scroll_area).setOnTouchListener((view, event) -> {
+            keepPadGesture(view, event);
             scrollDetector.onTouchEvent(event);
             if (event.getActionMasked() == MotionEvent.ACTION_UP) view.performClick();
             return true;
@@ -99,6 +101,15 @@ public class Mouse extends HidActivity {
             @Override public void onStartTrackingTouch(SeekBar seekBar) { }
             @Override public void onStopTrackingTouch(SeekBar seekBar) { }
         });
+    }
+
+    private static void keepPadGesture(View view, MotionEvent event) {
+        // A touchpad drag controls the remote pointer, even inside a scrollable small window.
+        int action = event.getActionMasked();
+        if (action == MotionEvent.ACTION_DOWN) view.getParent().requestDisallowInterceptTouchEvent(true);
+        else if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+            view.getParent().requestDisallowInterceptTouchEvent(false);
+        }
     }
 
     @SuppressLint("ClickableViewAccessibility")

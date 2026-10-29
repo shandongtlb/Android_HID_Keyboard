@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">HID键盘·优化版</string>
+    <string name="app_name">HID 键盘</string>
     <string name="msg_e_hid">HID 设备初始化失败</string>
     <string name="FnSpace">鼠标模式</string>
     <string name="touch_area">触摸区域</string>

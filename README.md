@@ -1,6 +1,16 @@
-# HID Keyboard Plus / HID 键盘优化版
+# HID Keyboard / HID 键盘
 
 基于 [Sucareto/Android_HID_Keyboard](https://github.com/Sucareto/Android_HID_Keyboard) v1.5.2 的稳定性改进版。用已 root 的 Android 手机，通过 USB 连接电脑等设备，发送键盘与鼠标输入。
+
+## 1.7.0 的变化
+
+- 应用名称统一为“HID 键盘 / HID Keyboard”，沿用 1.6.0 的包名和签名，可覆盖更新。
+- `compileSdk`、`targetSdk` 更新到 Android 17（API 37.0 / 37），最低仍为 Android 8.0（API 26）。使用 AGP 9.1.1、Gradle 9.3.1。
+- 更新 AppCompat、Activity 与 Material 组件，启用系统预测性返回支持。
+- 使用窗口 Insets 避让状态栏、导航栏、挖孔和桌面窗口标题栏，不依赖已废弃的 edge-to-edge 退出选项。
+- Android 17 大屏可能忽略横屏锁定；布局可适应竖屏、分屏和窗口缩放。空间不足时可横向、纵向滚动，连接状态和操作按钮保持在底部。
+- 窗口尺寸或配置变化时释放已按住的按键，清除 Fn 状态；鼠标触摸板手势不会被外层滚动容器截走。
+- 增加 Android 8 / Android 17 框架级布局回归测试。测试范围与真机验证限制见 [Android 17 适配说明](docs/android-17.md)。
 
 ## 1.6.0 的变化
 
@@ -14,6 +24,8 @@
 - 独立包名 `org.shandongtlb.hidkeyboard`，可与原版共存；debug 构建使用 `.debug` 后缀。
 
 ## 使用
+
+安装版本范围为 Android 8.0 及以上，当前目标为 Android 17；HID 功能仍取决于手机内核、root 方案和 USB Gadget 配置。
 
 1. 手机需要 root，并且内核已启用 USB HID Gadget 支持。
 2. 使用 [USB Gadget Tool](https://github.com/tejado/android-usb-gadget) 或自己的配置方式，先启用键盘和鼠标 Gadget。仍约定 `/dev/hidg0` 为键盘、`/dev/hidg1` 为鼠标；本应用不修改 Gadget 配置。
@@ -33,7 +45,7 @@ root helper 为普通绑定服务，不使用 daemon 模式、不注册开机启
 
 ## 构建与验证
 
-需要 JDK 17、Android SDK Platform 34 和 Build Tools 34.0.0：
+需要 JDK 21（Android 16/17 的 Robolectric 测试运行时要求）、Android SDK Platform 37.0 和 Build Tools 36.0.0。应用 Java 字节码仍以 Java 17 编译，由 D8 转换为 Android DEX：
 
 ```sh
 bash ./gradlew testDebugUnitTest lintRelease assembleDebug assembleRelease
@@ -43,7 +55,7 @@ bash ./gradlew testDebugUnitTest lintRelease assembleDebug assembleRelease
 - `app/build/outputs/apk/release/`：未提供签名配置时输出 unsigned APK。
 - 单元测试覆盖重复触摸、重复释放、组合键共享修饰键、Fn 映射变化、六键报告、鼠标状态及 root 接口报文长度检查。
 - GitHub Actions 对 push/PR 自动运行测试、Lint 和构建，在运行页面提供 APK、SHA-256 和检查报告。
-- Gradle Wrapper 使用官方 8.2 版本，并固定 Gradle 分发包的 SHA-256 校验值。
+- Gradle Wrapper 使用官方 9.3.1 版本，并固定 Gradle 分发包的 SHA-256 校验值。
 
 ### 自己的 release 签名
 
