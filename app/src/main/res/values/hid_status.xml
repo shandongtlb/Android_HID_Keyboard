@@ -1,0 +1,12 @@
+<resources>
+    <string name="release_all">Release keys</string>
+    <string name="retry">Retry</string>
+    <string name="hid_connecting">Connecting — approve root access</string>
+    <string name="hid_ready">Keyboard and mouse connected</string>
+    <string name="hid_keyboard_only">Keyboard connected; mouse device unavailable</string>
+    <string name="hid_missing">HID device missing. Enable the keyboard and mouse gadget first.</string>
+    <string name="hid_denied">Root connection failed. Check authorization and retry.</string>
+    <string name="hid_timeout">USB write timed out. Connect the host, then retry.</string>
+    <string name="hid_overflow">Input queue full. Input stopped; retry to reconnect.</string>
+    <string name="hid_disconnected">USB connection interrupted. Check the cable and retry.</string>
+</resources>

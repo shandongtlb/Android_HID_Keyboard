@@ -1,0 +1,51 @@
+name: Android build
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - name: Test, lint and build
+        env:
+          HID_KEYSTORE_BASE64: ${{ github.event_name != 'pull_request' && secrets.HID_KEYSTORE_BASE64 || '' }}
+          HID_STORE_PASSWORD: ${{ github.event_name != 'pull_request' && secrets.HID_STORE_PASSWORD || '' }}
+          HID_KEY_PASSWORD: ${{ github.event_name != 'pull_request' && secrets.HID_KEY_PASSWORD || '' }}
+          HID_KEY_ALIAS: ${{ github.event_name != 'pull_request' && secrets.HID_KEY_ALIAS || '' }}
+        run: |
+          if [ -n "$HID_KEYSTORE_BASE64" ]; then
+            printf '%s' "$HID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/hid-release.p12"
+            chmod 600 "$RUNNER_TEMP/hid-release.p12"
+            export HID_KEYSTORE="$RUNNER_TEMP/hid-release.p12"
+          fi
+          bash ./gradlew --no-daemon --max-workers=2 testDebugUnitTest lintRelease assembleDebug assembleRelease
+          find app/build/outputs/apk -name '*.apk' -exec sha256sum {} + > app/build/apk-sha256.txt
+      - name: Upload APKs
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: HID-Keyboard-${{ github.sha }}
+          path: |
+            app/build/outputs/apk/**/*.apk
+            app/build/apk-sha256.txt
+          if-no-files-found: error
+      - name: Upload check reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: Check-reports-${{ github.sha }}
+          path: |
+            app/build/reports/tests/
+            app/build/reports/lint-results*

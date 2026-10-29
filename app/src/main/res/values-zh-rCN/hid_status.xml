@@ -1,0 +1,12 @@
+<resources>
+    <string name="release_all">释放按键</string>
+    <string name="retry">重试</string>
+    <string name="hid_connecting">正在连接，请允许 root 权限</string>
+    <string name="hid_ready">键盘、鼠标已连接</string>
+    <string name="hid_keyboard_only">键盘已连接；鼠标节点不可用</string>
+    <string name="hid_missing">未找到 HID 节点，请先启用键盘和鼠标 Gadget。</string>
+    <string name="hid_denied">root 连接失败，请检查授权后重试。</string>
+    <string name="hid_timeout">USB 写入超时，请连接电脑后重试。</string>
+    <string name="hid_overflow">输入队列已满，已停止发送，请重试。</string>
+    <string name="hid_disconnected">USB 连接中断，请检查数据线后重试。</string>
+</resources>

@@ -12,3 +12,10 @@
 .cxx
 local.properties
 /app/release/
+
+# Private signing material and built packages
+*.jks
+*.keystore
+*.p12
+*.apk
+signing/

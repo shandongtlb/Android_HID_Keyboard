@@ -7,155 +7,100 @@ import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
-import android.widget.Toast;
-
-import androidx.appcompat.app.AppCompatActivity;
 
 import org.sucareto.androidhidkeyboard.databinding.ActivityKeyboardBinding;
 
-
-public class Keyboard extends AppCompatActivity {
-    HidController hid = new HidController();
-    private boolean FnEnable = false;
+public class Keyboard extends HidActivity {
+    private boolean FnEnable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        View root_view = ActivityKeyboardBinding.inflate(getLayoutInflater()).getRoot();
-        setContentView(root_view);
-
-        findViewById(R.id.BtnSpace).setOnTouchListener(new SpaceOnTouch());
-        findViewById(R.id.BtnEnter).setOnTouchListener(new EnterOnTouch());
-        findViewById(R.id.BtnFn).setOnTouchListener(new FnKeyOnTouch());
-
+        setHidContent(ActivityKeyboardBinding.inflate(getLayoutInflater()).getRoot());
         String packageName = getPackageName();
-
-        KeyOnTouch keyOnTouch = new KeyOnTouch();
         for (int i = 1; i < 72; i++) {
-            int resId = getResources().getIdentifier("Btn" + i, "id", packageName);
-            if (resId != 0) {
-                findViewById(resId).setOnTouchListener(keyOnTouch);
-            }
+            int id = getResources().getIdentifier("Btn" + i, "id", packageName);
+            if (id != 0) findViewById(id).setOnTouchListener(keyTouch(false));
         }
-        CtrlKeyOnTouch ctrlKeyOnTouch = new CtrlKeyOnTouch();
         for (int i = 1; i < 6; i++) {
-            int resId = getResources().getIdentifier("CtrlBtn" + i, "id", packageName);
-            if (resId != 0) {
-                findViewById(resId).setOnTouchListener(ctrlKeyOnTouch);
-            }
+            int id = getResources().getIdentifier("CtrlBtn" + i, "id", packageName);
+            if (id != 0) findViewById(id).setOnTouchListener(keyTouch(true));
         }
+        findViewById(R.id.BtnSpace).setOnTouchListener(keyTouch(false));
+        findViewById(R.id.BtnEnter).setOnTouchListener(keyTouch(false));
+        findViewById(R.id.BtnFn).setOnTouchListener(fnTouch());
     }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-        hid.UnInit();
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        if (hid.kInit()) {
-            Toast.makeText(this, R.string.msg_e_hid, Toast.LENGTH_LONG).show();
-        }
-    }
-
-    private class SpaceOnTouch implements View.OnTouchListener {
-        @SuppressLint("ClickableViewAccessibility")
-        @Override
-        public boolean onTouch(View v, MotionEvent e) {
-            switch (e.getAction()) {
-                case MotionEvent.ACTION_DOWN -> {
-                    v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_PRESS);
-                    if (FnEnable) {
-                        startActivity(new Intent(Keyboard.this, Mouse.class));
-                        break;
-                    }
-                    hid.kPress((byte) Integer.parseInt(v.getTag().toString(), 16));
-                }
-                case MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    hid.kRelease((byte) Integer.parseInt(v.getTag().toString(), 16));
-                }
-            }
-            return false;
-        }
-    }
-
-    private class EnterOnTouch implements View.OnTouchListener {
-        @SuppressLint("ClickableViewAccessibility")
-        @Override
-        public boolean onTouch(View v, MotionEvent e) {
-            switch (e.getAction()) {
-                case MotionEvent.ACTION_DOWN -> {
-                    v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_PRESS);
-                    if (FnEnable) {
-                        hid.kCode = new byte[]{0x05, 0, 0x4c, 0, 0, 0, 0, 0};
-                        hid.kSend();
+    @SuppressLint("ClickableViewAccessibility")
+    private View.OnTouchListener keyTouch(boolean modifier) {
+        return (view, event) -> {
+            switch (event.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                    if (!hid.isReady(this)) return true;
+                    view.setPressed(true);
+                    view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+                    if (view.getId() == R.id.BtnSpace && FnEnable) {
+                        hid.releaseAll(this);
+                        startActivity(new Intent(this, Mouse.class));
+                    } else if (view.getId() == R.id.BtnEnter && FnEnable) {
+                        hid.pressKey(this, view.getId(), 0x4c, 0x05);
                     } else {
-                        hid.kPress((byte) Integer.parseInt(v.getTag().toString(), 16));
+                        int code = Integer.parseInt(view.getTag().toString(), 16);
+                        hid.pressKey(this, view.getId(), modifier ? 0 : code, modifier ? code : 0);
                     }
-                }
-                case MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    if (FnEnable) {
-                        hid.kCode = new byte[]{0, 0, 0, 0, 0, 0, 0, 0};
-                        hid.kSend();
-                    } else {
-                        hid.kRelease((byte) Integer.parseInt(v.getTag().toString(), 16));
-                    }
-                }
+                    break;
+                case MotionEvent.ACTION_UP:
+                    view.performClick();
+                    // Fall through: release the captured press, regardless of the current Fn label.
+                case MotionEvent.ACTION_CANCEL:
+                    view.setPressed(false);
+                    hid.releaseKey(this, view.getId());
+                    break;
             }
-            return false;
-        }
+            return true;
+        };
     }
 
-    private class CtrlKeyOnTouch implements View.OnTouchListener {
-        @SuppressLint("ClickableViewAccessibility")
-        @Override
-        public boolean onTouch(View v, MotionEvent e) {
-            switch (e.getAction()) {
-                case MotionEvent.ACTION_DOWN -> {
-                    v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_PRESS);
-                    hid.kPress_c((byte) Integer.parseInt(v.getTag().toString(), 16));
-                }
-                case MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    hid.kRelease_c((byte) Integer.parseInt(v.getTag().toString(), 16));
-                }
-            }
-            return false;
-        }
-    }
-
-    private class KeyOnTouch implements View.OnTouchListener {
-        @SuppressLint("ClickableViewAccessibility")
-        @Override
-        public boolean onTouch(View v, MotionEvent e) {
-            switch (e.getAction()) {
-                case MotionEvent.ACTION_DOWN -> {
-                    v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_PRESS);
-                    hid.kPress((byte) Integer.parseInt(v.getTag().toString(), 16));
-                }
-                case MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    hid.kRelease((byte) Integer.parseInt(v.getTag().toString(), 16));
-                }
-            }
-            return false;
-        }
-    }
-
-    private class FnKeyOnTouch implements View.OnTouchListener {
-        @SuppressLint("ClickableViewAccessibility")
-        @Override
-        public boolean onTouch(View v, MotionEvent e) {
-            switch (e.getAction()) {
-                case MotionEvent.ACTION_DOWN -> {
-                    v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_PRESS);
+    @SuppressLint("ClickableViewAccessibility")
+    private View.OnTouchListener fnTouch() {
+        return (view, event) -> {
+            switch (event.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
                     FnEnable = true;
-                }
-                case MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> FnEnable = false;
-                default -> {
-                    return false;
-                }
+                    view.setPressed(true);
+                    view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+                    break;
+                case MotionEvent.ACTION_UP:
+                    view.performClick();
+                case MotionEvent.ACTION_CANCEL:
+                    FnEnable = false;
+                    view.setPressed(false);
+                    break;
+                default: return true;
             }
+            updateFnLabels();
+            return true;
+        };
+    }
+
+    @Override
+    protected void onPause() {
+        FnEnable = false;
+        updateFnLabels();
+        super.onPause();
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (!hasFocus && findViewById(R.id.BtnFn) != null) {
+            FnEnable = false;
+            findViewById(R.id.BtnFn).setPressed(false);
+            updateFnLabels();
+        }
+    }
+
+    private void updateFnLabels() {
             ((Button) findViewById(R.id.Btn12)).setText(getResources().getString(FnEnable ? R.string.KeyText78 : R.string.KeyText12));//Insert
             findViewById(R.id.Btn12).setTag(getResources().getString(FnEnable ? R.string.KeyCode78 : R.string.KeyCode12));
 
@@ -176,7 +121,5 @@ public class Keyboard extends AppCompatActivity {
 
             ((Button) findViewById(R.id.BtnSpace)).setText(getResources().getString(FnEnable ? R.string.FnSpace : R.string.KeyText70));//Space
             ((Button) findViewById(R.id.BtnEnter)).setText(getResources().getString(FnEnable ? R.string.FnEnter : R.string.KeyText54));//Enter
-            return false;
-        }
     }
 }

@@ -5,15 +5,30 @@ plugins {
 android {
     compileSdk 34
     defaultConfig {
-        applicationId "org.sucareto.androidhidkeyboard"
+        applicationId "org.shandongtlb.hidkeyboard"
         minSdk 26
         targetSdk 34
-        versionCode 11
-        versionName '1.5.2'
+        versionCode 12
+        versionName '1.6.0'
     }
 
+    signingConfigs {
+        if (System.getenv('HID_KEYSTORE')) {
+            release {
+                storeFile file(System.getenv('HID_KEYSTORE'))
+                storePassword System.getenv('HID_STORE_PASSWORD')
+                keyAlias System.getenv('HID_KEY_ALIAS') ?: 'hid-release'
+                keyPassword System.getenv('HID_KEY_PASSWORD') ?: System.getenv('HID_STORE_PASSWORD')
+            }
+        }
+    }
     buildTypes {
+        debug {
+            applicationIdSuffix ".debug"
+            versionNameSuffix "-debug"
+        }
         release {
+            if (System.getenv('HID_KEYSTORE')) signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -23,6 +38,7 @@ android {
     }
     buildFeatures {
         viewBinding true
+        aidl true
     }
     namespace 'org.sucareto.androidhidkeyboard'
 }
@@ -33,5 +49,6 @@ dependencies {
 }
 
 dependencies {
-    implementation 'com.github.topjohnwu.libsu:io:5.2.2'
+    implementation 'com.github.topjohnwu.libsu:service:6.0.0'
+    testImplementation 'junit:junit:4.13.2'
 }
